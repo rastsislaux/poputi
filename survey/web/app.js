@@ -170,7 +170,7 @@
     toast: document.getElementById("toast-container"),
   };
 
-  let lang = localStorage.getItem("poputi_lang") || "en";
+  let lang = localStorage.getItem("poputi_lang") || "ru";
   el.langSelect.value = lang;
 
   // State
@@ -188,7 +188,45 @@
     answers: "poputi_answers",
     metadata: "poputi_metadata",
     index: "poputi_index",
+    seed: "poputi_shuffle_seed",
   };
+
+  // Deterministic RNG and shuffle
+  function seedToUint32(str) {
+    // Simple string hash to uint32 (FNV-1a inspired)
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < String(str).length; i++) {
+      h ^= String(str).charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function mulberry32(a) {
+    let t = a >>> 0;
+    return function () {
+      t = (t + 0x6D2B79F5) >>> 0;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffleInPlace(arr, rnd) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  function ensureShuffleSeed() {
+    let seed = localStorage.getItem(storageKeys.seed);
+    if (!seed) {
+      seed = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      try { localStorage.setItem(storageKeys.seed, seed); } catch {}
+    }
+    return seed;
+  }
 
   function ensureUserId() {
     let id = localStorage.getItem(storageKeys.userId);
@@ -457,8 +495,12 @@
     const res = await fetch(QUESTIONS_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load questions.json");
     const data = await res.json();
-    // Expect array of { id, means_of_transportation, base_time_value, base_time_unit, prompt }
-    state.questions = Array.isArray(data) ? data : [];
+    const arr = Array.isArray(data) ? data.slice() : [];
+    // Deterministic shuffle based on persisted seed
+    const seed = ensureShuffleSeed();
+    const rnd = mulberry32(seedToUint32(seed));
+    shuffleInPlace(arr, rnd);
+    state.questions = arr;
     state.index = 0;
   }
 
