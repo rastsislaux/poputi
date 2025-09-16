@@ -2,15 +2,13 @@ name: Deploy Infrastructure (OpenTofu)
 
 on:
   push:
-    paths:
-      - 'infrastructure/**'
+    branches: ["master"]
   workflow_dispatch:
 
 jobs:
   terraform:
     name: OpenTofu Apply
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
     env:
       TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
