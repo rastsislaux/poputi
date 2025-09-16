@@ -1,7 +1,51 @@
 /* Poputi Survey front-end */
 (() => {
   const QUESTIONS_URL = "questions.json"; // relative to survey/web/
-  const DUMMY_ENDPOINT = "https://httpbin.org/post"; // replace with real endpoint later
+  const DUMMY_ENDPOINT = "https://httpbin.org/post"; // legacy HTTP writer endpoint (kept for reference)
+
+  // ---------- Result Writers Abstraction ----------
+  class ResultWriter {
+    async write(_payload) {
+      throw new Error("Not implemented");
+    }
+  }
+
+  class HttpResultWriter extends ResultWriter {
+    constructor(endpoint) {
+      super();
+      this.endpoint = endpoint;
+    }
+    async write(payload) {
+      const res = await fetch(this.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("HTTP error");
+      return await res.json().catch(() => ({}));
+    }
+  }
+
+  class FirestoreResultWriter extends ResultWriter {
+    constructor() {
+      super();
+      const cfg = (window && window.POPUTI_FIREBASE_CONFIG) || null;
+      if (!cfg) throw new Error("Missing window.POPUTI_FIREBASE_CONFIG");
+      // Using compat builds to avoid bundlers
+      if (!firebase?.apps?.length) {
+        firebase.initializeApp(cfg);
+      }
+      this.db = firebase.firestore();
+    }
+    async write(payload) {
+      const doc = {
+        ...payload,
+        _client_timestamp: new Date().toISOString(),
+      };
+      const ref = await this.db.collection("survey").add(doc);
+      return { id: ref.id };
+    }
+  }
 
   // i18n dictionary
   const i18n = {
@@ -485,17 +529,11 @@
     };
     try {
       showStatus(t("submitting"));
-      const res = await fetch(DUMMY_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("HTTP error");
+      // Choose Firestore writer by default; keep HTTP writer available but unused
+      const writer = new FirestoreResultWriter();
+      await writer.write(payload);
       showStatus(t("submitted"));
       showToast(i18n[lang].toastSubmitted);
-      // Optionally display response id/echo
-      // const json = await res.json();
-      // console.log(json);
     } catch (err) {
       console.error(err);
       showStatus(t("submitError"), "error");

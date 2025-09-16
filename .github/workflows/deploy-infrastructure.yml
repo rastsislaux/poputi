@@ -1,0 +1,78 @@
+name: Deploy Infrastructure (OpenTofu)
+
+on:
+  push:
+    paths:
+      - 'infrastructure/**'
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: OpenTofu Apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    env:
+      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_region: us-central1
+      TF_VAR_tf_state_bucket: ${{ secrets.GCS_TF_STATE_BUCKET }}
+      TF_VAR_tf_state_prefix: terraform/state
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.7.3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Install gcloud SDK (for gsutil)
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Ensure GCS bucket for TF state exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUCKET="${{ secrets.GCS_TF_STATE_BUCKET }}"
+          if [[ -z "$BUCKET" ]]; then
+            echo "GCS_TF_STATE_BUCKET secret is not set" >&2
+            exit 1
+          fi
+          if ! gsutil ls -b "gs://$BUCKET" >/dev/null 2>&1; then
+            gsutil mb -p "${{ secrets.GCP_PROJECT_ID }}" -l us-central1 "gs://$BUCKET"
+            # Uniform bucket-level access and versioning help with state safety (both free)
+            gsutil uniformbucketlevelaccess set on "gs://$BUCKET"
+            gsutil versioning set on "gs://$BUCKET"
+          fi
+
+      - name: OpenTofu Init
+        working-directory: infrastructure
+        run: |
+          tofu init \
+            -backend-config="bucket=${{ secrets.GCS_TF_STATE_BUCKET }}" \
+            -backend-config="prefix=terraform/state"
+
+      - name: OpenTofu Apply
+        working-directory: infrastructure
+        run: tofu apply -auto-approve
+
+      - name: Export Firebase web config
+        working-directory: infrastructure
+        run: |
+          set -euo pipefail
+          tofu output -json firebase_web_config > ../firebase_web_config.json
+
+      - name: Upload Firebase config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-web-config
+          path: firebase_web_config.json
+          if-no-files-found: error
+
+

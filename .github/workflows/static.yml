@@ -5,6 +5,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
+    paths:
+      - 'survey/web/**'
+      - '.github/workflows/static.yml'
+      - '.github/workflows/deploy-infrastructure.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,6 +35,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Download Firebase config artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firebase-web-config
+          path: .
+      - name: Generate firebase-config.js from artifact
+        working-directory: survey/web
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f ../../firebase_web_config.json ]]; then
+            echo "firebase_web_config.json artifact missing" >&2
+            exit 1
+          fi
+          jq -r '
+            "window.POPUTI_FIREBASE_CONFIG = {\n" +
+            "  apiKey: \"" + .apiKey + "\",\n" +
+            "  authDomain: \"" + .authDomain + "\",\n" +
+            "  projectId: \"" + .projectId + "\",\n" +
+            "  storageBucket: \"" + (.storageBucket // "") + "\",\n" +
+            "  messagingSenderId: \"" + (.messagingSenderId // "") + "\",\n" +
+            "  appId: \"" + (.appId // "") + "\",\n" +
+            "  measurementId: \"" + (.measurementId // "") + "\"\n" +
+            "};"
+          ' ../../firebase_web_config.json > firebase-config.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
