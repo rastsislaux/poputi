@@ -2,19 +2,17 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["master"]
-    paths:
-      - 'survey/web/**'
-      - '.github/workflows/static.yml'
-      - '.github/workflows/deploy-infrastructure.yml'
+  # Run only after infra deploy finishes, so artifact is guaranteed to exist
+  workflow_run:
+    workflows: ["Deploy Infrastructure (OpenTofu)"]
+    types: [completed]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -35,9 +33,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download Firebase config artifact
-        uses: actions/download-artifact@v4
+      - name: Download Firebase config artifact from infra workflow
+        uses: dawidd6/action-download-artifact@v2
         with:
+          run_id: ${{ github.event.workflow_run.id }}
           name: firebase-web-config
           path: .
       - name: Generate firebase-config.js from artifact
