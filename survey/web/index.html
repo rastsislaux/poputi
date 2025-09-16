@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poputi Survey</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 id="app-title">Poputi — Survey</h1>
+      <div class="lang-switch" role="group" aria-label="Language switcher">
+        <span class="lang-icon" aria-hidden="true">🌐</span>
+        <select id="lang-select" aria-label="Language">
+          <option value="en" selected>EN</option>
+          <option value="ru">RU</option>
+        </select>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" id="intro">
+        <div id="intro-text">Help us understand what counts as “along the way”. Please fill your info and answer a few scenarios.</div>
+      </section>
+
+      <form class="card" id="survey-form">
+        <fieldset>
+          <legend id="meta-legend">Respondent metadata</legend>
+          <div class="grid" id="metadata-fields"></div>
+        </fieldset>
+
+        <fieldset id="question-area" class="hidden">
+          <legend id="questions-legend">Questions</legend>
+          <div id="question-progress" class="progress"><div id="progress-bar"></div></div>
+          <div id="question-container"></div>
+          <div class="actions">
+            <button type="button" id="prev-btn" class="btn secondary" disabled>← <span data-i18n="prev">Previous</span></button>
+            <button type="button" id="next-btn" class="btn primary"><span data-i18n="next">Next</span> →</button>
+          </div>
+        </fieldset>
+
+        <div class="submit-spacer"></div>
+        <div id="submit-area" class="hidden">
+          <button type="submit" class="btn accent" id="submit-btn">Submit</button>
+        </div>
+      </form>
+
+      <section id="status" aria-live="polite"></section>
+      <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    </main>
+
+    <footer class="footer">
+      <small>© 2025 Poputi</small>
+    </footer>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
+
