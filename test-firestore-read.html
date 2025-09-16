@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Firestore Read Test — survey collection</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    code { background: #f5f5f5; padding: 2px 4px; border-radius: 4px; }
+    .ok { color: #0a7a0a; }
+    .err { color: #b00020; }
+    pre { background: #f7f7f7; padding: 12px; border-radius: 6px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Firestore Read Test</h1>
+  <p>This page tries to <strong>read</strong> from the <code>survey</code> collection to verify Firestore rules.</p>
+  <ul>
+    <li>Config source: <code>config.js</code> in repo root</li>
+    <li>SDK: Firebase compat (app + firestore)</li>
+  </ul>
+
+  <div id="status">Initializing…</div>
+  <pre id="output" aria-live="polite"></pre>
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- Project config (expects window.POPUTI_FIREBASE_CONFIG) -->
+  <script src="./config.js"></script>
+
+  <script>
+    (async () => {
+      const status = document.getElementById('status');
+      const out = document.getElementById('output');
+      function log(obj) {
+        out.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+      }
+
+      try {
+        if (!window.POPUTI_FIREBASE_CONFIG) {
+          status.className = 'err';
+          status.textContent = 'Missing window.POPUTI_FIREBASE_CONFIG from config.js';
+          return;
+        }
+        if (!firebase?.apps?.length) firebase.initializeApp(window.POPUTI_FIREBASE_CONFIG);
+        const db = firebase.firestore();
+        status.textContent = 'Initialized. Querying…';
+
+        // Try a simple read: list up to 5 docs from survey
+        const snap = await db.collection('survey').limit(5).get();
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        status.className = 'ok';
+        status.textContent = `Read OK: fetched ${docs.length} docs`;
+        log(docs);
+      } catch (e) {
+        status.className = 'err';
+        status.textContent = `Read FAILED: ${e && e.message ? e.message : e}`;
+        log(e);
+      }
+    })();
+  </script>
+</body>
+</html>
+
+
