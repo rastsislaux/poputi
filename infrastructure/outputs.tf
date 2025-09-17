@@ -27,4 +27,15 @@ output "firebase_web_config" {
   sensitive = true
 }
 
+output "export_service_account_email" {
+  description = "Email of the Firestore export service account"
+  value       = google_service_account.exporter.email
+}
+
+output "export_service_account_key_json" {
+  description = "Service account key JSON for export script"
+  value       = google_service_account_key.exporter.private_key
+  sensitive   = true
+}
+
 
