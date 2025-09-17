@@ -34,7 +34,7 @@ output "export_service_account_email" {
 
 output "export_service_account_key_json" {
   description = "Service account key JSON for export script"
-  value       = google_service_account_key.exporter.private_key
+  value       = base64decode(google_service_account_key.exporter.private_key)
   sensitive   = true
 }
 
