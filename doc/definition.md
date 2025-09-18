@@ -87,3 +87,11 @@ Wording example shown to respondents:
 
 “You travel from point A to point B by [means of transportation], and it takes X [minutes/hours/days]. How much extra time to visit a mid-point C would you still consider as ‘along the way’?”
 
+### Method used (current analysis)
+
+- See the notebook `analysis/survey_analysis.ipynb`.
+- Data pipeline: CSV export → drop duplicate (`user_id`, `question_id`) keeping latest → normalize base and extra times to minutes.
+- Visualization: scatter plot of base minutes vs acceptable extra minutes.
+- Approximation: binned medians in x followed by isotonic regression (monotone increasing) to estimate f(x).
+- The fitted curve is exported to `analysis/fitted_threshold.csv` for downstream use.
+
