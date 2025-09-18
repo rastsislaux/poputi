@@ -12,14 +12,14 @@ This directory provisions a Firestore database (Native mode) in a Google Cloud p
   - Alternatively, `roles/editor` works for bootstrap
 - Service account key JSON for local use, or GitHub Actions secret for CI
 
-## Files
+## Layout
 
-- `versions.tf`: Terraform and provider requirements
-- `variables.tf`: Input variables (`project_id`, `region`, `database_id`)
-- `main.tf`: Enables the Firestore API and creates the database
-- `outputs.tf`: Useful outputs
-- `firebase.tf`: Firebase project linkage, web app config output, and Firestore rules deployment
-- `firestore.rules`: Firestore security rules (public create to `survey`, no reads)
+- Root:
+  - `versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`
+- Modules by service:
+  - `firestore/`: database provisioning
+  - `firebase/`: Firebase linkage, Firestore rules, Web App config
+  - `iam/`: exporter service account and IAM bindings
 
 ## Usage (local)
 
@@ -77,7 +77,7 @@ This directory provisions a Firestore database (Native mode) in a Google Cloud p
 
 ## Firestore rules
 
-Rules in `firestore.rules` are deployed by Terraform and configured to:
+Rules in `firebase/firestore.rules` are deployed and configured to:
 
 - Allow anyone to create docs in `survey` collection (public write for submissions)
 - Deny reads/updates/deletes from the web (read happens via privileged access only)

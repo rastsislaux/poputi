@@ -1,16 +1,19 @@
-resource "google_project_service" "firestore" {
-  project = var.project_id
-  service = "firestore.googleapis.com"
+module "firestore" {
+  source      = "./firestore"
+  project_id  = var.project_id
+  region      = var.region
+  database_id = var.database_id
 }
 
-resource "google_firestore_database" "this" {
-  project          = var.project_id
-  name             = var.database_id
-  location_id      = var.region
-  type             = "FIRESTORE_NATIVE"
-  concurrency_mode = "OPTIMISTIC"
+module "firebase" {
+  source     = "./firebase"
+  project_id = var.project_id
+  region     = var.region
+}
 
-  depends_on = [google_project_service.firestore]
+module "iam" {
+  source     = "./iam"
+  project_id = var.project_id
 }
 
 
