@@ -1,0 +1,35 @@
+name: Deploy app to Cloudflare Pages
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - 'app/**'
+      - '.github/workflows/static-sites.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "cf-pages-app"
+  cancel-in-progress: true
+
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ vars.CF_PAGES_PROJECT_NAME }}
+          directory: app
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+
+
