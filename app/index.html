@@ -1,1 +1,114 @@
-# Dummy
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poputi — Along-the-way checker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+      <h1 id="app-title" data-i18n="title">Poputi</h1>
+      <div class="lang-switch">
+        <select id="lang-select" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="ru" selected>RU</option>
+        </select>
+      </div>
+  </header>
+  <main class="layout">
+    <section class="map-panel">
+      <div id="map"></div>
+        <div class="hint" id="hint-text" data-i18n="hint">Find A, B, C via search below. Zoom or drag to adjust.</div>
+    </section>
+
+    <div class="controls">
+      <div class="row row-ab">
+        <div class="input">
+          <label for="addr-a" data-i18n="from">From</label>
+          <input id="addr-a" type="text" data-i18n-placeholder="addrPlaceholder" placeholder="Enter address or place">
+          <div id="sugg-a" class="suggest hidden"></div>
+        </div>
+        <div class="input">
+          <label for="addr-b" data-i18n="to">To</label>
+          <input id="addr-b" type="text" data-i18n-placeholder="addrPlaceholder" placeholder="Enter address or place">
+          <div id="sugg-b" class="suggest hidden"></div>
+        </div>
+        <div class="input">
+          <label for="addr-c" data-i18n="midpoint">Mid-point</label>
+          <input id="addr-c" type="text" data-i18n-placeholder="addrPlaceholder" placeholder="Enter address or place">
+          <div id="sugg-c" class="suggest hidden"></div>
+        </div>
+        <div class="input">
+          <label data-i18n="means">Means</label>
+          <div id="means-icons" class="means">
+            <button class="means-btn active" data-value="driving" aria-pressed="true" title="Car" data-i18n-title-car><i class="fa-solid fa-car" aria-hidden="true"></i></button>
+            <button class="means-btn" data-value="walking" aria-pressed="false" title="Walk" data-i18n-title-walk><i class="fa-solid fa-person-walking" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-options">
+        <details class="input advanced">
+          <summary id="adv-summary" data-i18n="advanced">Advanced settings</summary>
+          <div class="row">
+            <div class="input">
+              <label for="strategy" data-i18n="strategy">Strategy</label>
+              <select id="strategy">
+                <option value="objective" selected data-i18n="objective">Objective</option>
+              </select>
+            </div>
+            <div class="input">
+              <label for="geocoder" data-i18n="geocoder">Geocoder</label>
+              <select id="geocoder">
+                <option value="photon">Photon (Komoot)</option>
+                <option value="nominatim" selected>OSM Nominatim</option>
+                <option value="locationiq">LocationIQ</option>
+              </select>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button id="compute" class="btn accent big" data-i18n="check">Check</button>
+      </div>
+    </div>
+    <aside class="info-panel">
+      <div class="card answer">
+        <div id="answer-head" class="answer-head">...</div>
+        <div id="answer-sub" class="answer-sub hidden"></div>
+      </div>
+      <div class="card">
+        <h3>Details</h3>
+        <dl class="kv">
+          <dt data-i18n="base">Base time A→B</dt><dd id="base-time">–</dd>
+          <dt data-i18n="via">Via C time A→C→B</dt><dd id="via-time">–</dd>
+          <dt data-i18n="extra">Proposed extra (δ*)</dt><dd id="extra-time">–</dd>
+          <dt data-i18n="threshold">Threshold f(x)</dt><dd id="threshold">–</dd>
+          <dt data-i18n="difference">Difference</dt><dd id="diff">–</dd>
+          <dt data-i18n="percent">Percent</dt><dd id="percent">–</dd>
+        </dl>
+      </div>
+      <div class="card small">
+        <h3 style="margin-top:0" data-i18n="method">Methodology</h3>
+        <p id="method-text">
+          Population responses are cleaned (latest per user×question), times normalized to minutes, and an
+          objective threshold <code>f(x)</code> is fitted as a monotone curve (isotonic regression over binned medians).
+          The fitted curve is shipped as <code>fitted_threshold.json</code> and evaluated via linear interpolation.
+        </p>
+        <canvas id="mini-plot" width="360" height="140" aria-label="Threshold plot" style="width:100%;max-width:360px;display:block;border:1px solid var(--border);border-radius:10px;background:#fff"></canvas>
+        <p style="margin-top:8px" id="source-text">
+          Source & analysis: <a href="https://github.com/rastsislaux/poputi" target="_blank" rel="noopener noreferrer">github.com/rastsislaux/poputi</a>
+        </p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
